@@ -12,7 +12,7 @@
         .mirror { transform:scaleX(-1); }
         
         /* 🎨 DYNAMIC LOGO OVERLAY LAYER CONFIGURATION */
-        #frame-overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; object-fit:cover; z-index:5; }
+        #frame-overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; object-fit:cover; z-index:5; display:none; }
         
         #capture-btn { position:absolute; bottom:30px; left:50%; transform:translateX(-50%); width:75px; height:75px; background:white; border:5px solid rgba(0,0,0,0.3); border-radius:50%; cursor:pointer; z-index:10; }
         #switch-btn { position:absolute; bottom:42px; right:30px; width:50px; height:50px; background:rgba(0,0,0,0.5); border:2px solid white; border-radius:50%; color:white; font-size:24px; cursor:pointer; z-index:10; display:flex; justify-content:center; align-items:center; }
@@ -27,7 +27,7 @@
 
 <div id="camera-container">
     <video id="webcam" class="mirror" autoplay playsinline></video>
-    <img id="frame-overlay" src="" alt="Branding Overlay">
+    <img id="frame-overlay" alt="Branding Overlay">
     <button id="capture-btn" onclick="_0x4a2c()"></button>
     <button id="switch-btn" onclick="_0x5b3d()"></button>
 </div>
@@ -36,10 +36,26 @@
     <div class="spinner"></div>
     <div id="loading-text">Activating Camera Stream... 🌊🌤️</div>
 </div>
-<img id="frame-source" src="" style="display:none;">
+<img id="frame-source" style="display:none;">
 <canvas id="canvas"></canvas>
 
 <script>
+    (function(){
+        // 🔒 SECURITY LAYER 1: DOMAIN LOCK
+        // PALITAN MO ANG MATERYAL SA BABA NG IYONG TOTOONG GITHUB USERNAME!
+        const _0xallowedHost = "IYONG-GITHUB-USERNAME.github.io"; 
+        const _0xcurrentHost = window.location.hostname;
+        if (!_0xcurrentHost.includes(_0xallowedHost) && !_0xcurrentHost.includes("localhost") && !_0xcurrentHost.includes("127.0.0.1")) {
+            document.body.innerHTML = "<div style='color:white;text-align:center;padding-top:50px;font-family:sans-serif;'><h2>🚫 Unauthorized Domain</h2><p>This software is protected and locked.</p></div>";
+            throw new Error("Execution halted.");
+        }
+
+        // 🔒 SECURITY LAYER 2: SELF-DEFENDING
+        const _0xvalidate = function() { const _0xcheck = function() { return 'string'; }; return _0xcheck(); };
+        if (_0xvalidate() !== 'string') { while(true){}; }
+    })();
+
+    // Anti-DevTools Key Blocker
     document.addEventListener('keydown',function(_0x1a){if(_0x1a.keyCode==123||(_0x1a.ctrlKey&&_0x1a.shiftKey&&(_0x1a.keyCode==73||_0x1a.keyCode==74||_0x1a.keyCode==67))||(_0x1a.ctrlKey&&_0x1a.keyCode==85)){_0x1a.preventDefault();return false;}});
     
     const _0x3b4c=document.getElementById('webcam');const _0x2c1d=document.getElementById('canvas');const _0x1c2b=document.getElementById('loading-overlay');const _0x5e4f=document.getElementById('frame-overlay');const _0x4d3e=document.getElementById('frame-source');
@@ -48,6 +64,7 @@
 
     function _0xinitCamera() {
         const _0xunmasked = atob(_0xactiveTarget);
+        _0x5e4f.onload = function() { _0x5e4f.style.display = "block"; };
         _0x5e4f.src = _0xunmasked;
         _0x4d3e.src = _0xunmasked;
         _0x7f8g(_0xbb22);
