@@ -18,8 +18,16 @@
         #switch-btn { position:absolute; bottom:42px; right:30px; width:50px; height:50px; background:rgba(0,0,0,0.5); border:2px solid white; border-radius:50%; color:white; font-size:24px; cursor:pointer; z-index:10; display:flex; justify-content:center; align-items:center; }
         #canvas { display:none; }
         
-        #loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:200; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; font-size:16px; font-weight:bold; }
-        .spinner { border:4px solid rgba(255,255,255,0.1); width:40px; height:40px; border-radius:50%; border-left-color:#fff; animation:spin 1s linear infinite; margin-bottom:15px; }
+        /* 🌟 PINAGANDANG LOADING OVERLAY NA MAY BRANDING */
+        #loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; font-family:sans-serif; text-align:center; padding: 20px; }
+        
+        /* Dito ipapakita ang filter/frame sa background ng loading window */
+        #loading-frame-preview { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; pointer-events:none; opacity:0.4; z-index:1; }
+        
+        .loading-box { z-index:2; display:flex; flex-direction:column; align-items:center; background: rgba(0,0,0,0.6); padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); }
+        .spinner { border:4px solid rgba(255,255,255,0.1); width:45px; height:45px; border-radius:50%; border-left-color:#fff; animation:spin 1s linear infinite; margin-bottom:20px; }
+        .loading-title { font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #fff; letter-spacing: 0.5px; }
+        .loading-sub { font-size: 14px; color: #ccc; max-width: 250px; line-height: 1.4; }
         @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
     </style>
 </head>
@@ -33,8 +41,13 @@
 </div>
 
 <div id="loading-overlay">
-    <div class="spinner"></div>
-    <div id="loading-text">Activating Camera Stream... 🌊🌤️</div>
+    <!-- Bakgrawnd na filter para makita agad ng customer ang vibe ng store -->
+    <img id="loading-frame-preview" alt="Loading Preview">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <div class="loading-title">Allow Camera Access 📸</div>
+        <div id="loading-text" class="loading-sub">Mangyaring pindutin ang <b>"Allow"</b> kapag nag-prompt ang iyong browser para magamit ang Souvenir Camera. ✨</div>
+    </div>
 </div>
 <img id="frame-source" style="display:none;">
 <canvas id="canvas"></canvas>
@@ -42,7 +55,6 @@
 <script>
     (function(){
         // 🔒 SECURITY LAYER 1: DOMAIN LOCK
-        // PALITAN MO ANG MATERYAL SA BABA NG IYONG TOTOONG GITHUB USERNAME!
         const _0xallowedHost = "scantoselfie.github.io"; 
         const _0xcurrentHost = window.location.hostname;
         if (!_0xcurrentHost.includes(_0xallowedHost) && !_0xcurrentHost.includes("localhost") && !_0xcurrentHost.includes("127.0.0.1")) {
@@ -58,12 +70,16 @@
     // Anti-DevTools Key Blocker
     document.addEventListener('keydown',function(_0x1a){if(_0x1a.keyCode==123||(_0x1a.ctrlKey&&_0x1a.shiftKey&&(_0x1a.keyCode==73||_0x1a.keyCode==74||_0x1a.keyCode==67))||(_0x1a.ctrlKey&&_0x1a.keyCode==85)){_0x1a.preventDefault();return false;}});
     
-    const _0x3b4c=document.getElementById('webcam');const _0x2c1d=document.getElementById('canvas');const _0x1c2b=document.getElementById('loading-overlay');const _0x5e4f=document.getElementById('frame-overlay');const _0x4d3e=document.getElementById('frame-source');
+    const _0x3b4c=document.getElementById('webcam');const _0x2c1d=document.getElementById('canvas');const _0x1c2b=document.getElementById('loading-overlay');const _0x5e4f=document.getElementById('frame-overlay');const _0x4d3e=document.getElementById('frame-source');const _0xloadFrame=document.getElementById('loading-frame-preview');
     let _0xaa11=null;let _0xbb22="user";let _0xactiveTarget="ZnJhbWUucG5n"; 
     const _0xee55=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints > 1);
 
     function _0xinitCamera() {
         const _0xunmasked = atob(_0xactiveTarget);
+        
+        // I-load ang image sa background ng loading screen para makita agad ang branding
+        _0xloadFrame.src = _0xunmasked;
+        
         _0x5e4f.onload = function() { _0x5e4f.style.display = "block"; };
         _0x5e4f.src = _0xunmasked;
         _0x4d3e.src = _0xunmasked;
@@ -80,7 +96,9 @@
             _0xaa11=stream; _0x3b4c.srcObject=stream; 
             _0x1c2b.style.display = "none"; 
         })
-        .catch(err=>{ alert("Please allow Camera Access!"); _0x1c2b.style.display = "none"; });
+        .catch(err=>{ 
+            document.getElementById('loading-text').innerHTML = "<span style='color:#ff4d4d;'>Inyong pinigilan (Blocked) ang camera access. Paki-refresh ang page at piliin ang Allow.</span>";
+        });
     }
 
     function _0x5b3d() { _0xbb22=(_0xbb22==="user")?"environment":"user"; _0x7f8g(_0xbb22); }
