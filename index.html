@@ -72,7 +72,6 @@
     
     const _0x3b4c=document.getElementById('webcam');const _0x2c1d=document.getElementById('canvas');const _0x1c2b=document.getElementById('loading-overlay');const _0x5e4f=document.getElementById('frame-overlay');const _0x4d3e=document.getElementById('frame-source');const _0xloadFrame=document.getElementById('loading-frame-preview');
     let _0xaa11=null;let _0xbb22="user";let _0xactiveTarget="ZnJhbWUucG5n"; 
-    const _0xee55=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints > 1);
 
     function _0xinitCamera() {
         const _0xunmasked = atob(_0xactiveTarget);
@@ -109,18 +108,11 @@
         try { _0x11aa.drawImage(_0x4d3e,0,0,_0x22bb,_0x44dd); } catch(e) {}
         const _0x78dd=_0x2c1d.toDataURL('image/png');
         
-        if(_0xee55 && navigator.share){
-            try{
-                const _0x99ff=await fetch(_0x78dd); const _0x11ee=await _0x99ff.blob();
-                const _0x22ff=new File([_0x11ee],'souvenir.png',{type:'image/png'});
-                await navigator.share({files:[_0x22ff],title:'My Souvenir',text:'Captured at Baybayin Cafe! 🌊✨'});
-            }catch(err){}
-        }else{
-            const _0xlink=document.createElement('a');
-            _0xlink.download=`souvenir-${Math.floor(Date.now()/1000)}.png`;
-            _0xlink.href=_0x78dd;
-            _0xlink.click();
-        }
+        // Diretsong download para sa LAHAT ng devices (Android at iOS)
+        const _0xlink=document.createElement('a');
+        _0xlink.download=`souvenir-${Math.floor(Date.now()/1000)}.png`;
+        _0xlink.href=_0x78dd;
+        _0xlink.click();
     }
 </script>
 </body>
