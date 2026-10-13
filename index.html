@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Souvenir Camera</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+        body, html { width:100%; height:100%; overflow:hidden; background:#000; font-family:sans-serif; }
+        #camera-container { position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center; overflow:hidden; }
+        video { width:100%; height:100%; object-fit:cover; }
+        .mirror { transform:scaleX(-1); }
+        
+        /* 🎨 DYNAMIC LOGO OVERLAY LAYER CONFIGURATION */
+        #frame-overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; object-fit:cover; z-index:5; }
+        
+        #capture-btn { position:absolute; bottom:30px; left:50%; transform:translateX(-50%); width:75px; height:75px; background:white; border:5px solid rgba(0,0,0,0.3); border-radius:50%; cursor:pointer; z-index:10; }
+        #switch-btn { position:absolute; bottom:42px; right:30px; width:50px; height:50px; background:rgba(0,0,0,0.5); border:2px solid white; border-radius:50%; color:white; font-size:24px; cursor:pointer; z-index:10; display:flex; justify-content:center; align-items:center; }
+        #canvas { display:none; }
+        
+        #loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:200; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; font-size:16px; font-weight:bold; }
+        .spinner { border:4px solid rgba(255,255,255,0.1); width:40px; height:40px; border-radius:50%; border-left-color:#fff; animation:spin 1s linear infinite; margin-bottom:15px; }
+        @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div id="camera-container">
+    <video id="webcam" class="mirror" autoplay playsinline></video>
+    <img id="frame-overlay" src="" alt="Branding Overlay">
+    <button id="capture-btn" onclick="_0x4a2c()"></button>
+    <button id="switch-btn" onclick="_0x5b3d()"></button>
+</div>
+
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loading-text">Activating Camera Stream... 🌊🌤️</div>
+</div>
+<img id="frame-source" src="" style="display:none;">
+<canvas id="canvas"></canvas>
+
+<script>
+    document.addEventListener('keydown',function(_0x1a){if(_0x1a.keyCode==123||(_0x1a.ctrlKey&&_0x1a.shiftKey&&(_0x1a.keyCode==73||_0x1a.keyCode==74||_0x1a.keyCode==67))||(_0x1a.ctrlKey&&_0x1a.keyCode==85)){_0x1a.preventDefault();return false;}});
+    
+    const _0x3b4c=document.getElementById('webcam');const _0x2c1d=document.getElementById('canvas');const _0x1c2b=document.getElementById('loading-overlay');const _0x5e4f=document.getElementById('frame-overlay');const _0x4d3e=document.getElementById('frame-source');
+    let _0xaa11=null;let _0xbb22="user";let _0xactiveTarget="ZnJhbWUucG5n"; 
+    const _0xee55=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints > 1);
+
+    function _0xinitCamera() {
+        const _0xunmasked = atob(_0xactiveTarget);
+        _0x5e4f.src = _0xunmasked;
+        _0x4d3e.src = _0xunmasked;
+        _0x7f8g(_0xbb22);
+    }
+
+    _0xinitCamera();
+
+    function _0x7f8g(_0x9h8i){
+        if(_0xaa11){_0xaa11.getTracks().forEach(track=>track.stop());}
+        if(_0x9h8i==="user"){_0x3b4c.classList.add('mirror');}else{_0x3b4c.classList.remove('mirror');}
+        navigator.mediaDevices.getUserMedia({video:{facingMode:_0x9h8i,width:{ideal:1920},height:{ideal:1080}},audio:false})
+        .then(stream=>{ 
+            _0xaa11=stream; _0x3b4c.srcObject=stream; 
+            _0x1c2b.style.display = "none"; 
+        })
+        .catch(err=>{ alert("Please allow Camera Access!"); _0x1c2b.style.display = "none"; });
+    }
+
+    function _0x5b3d() { _0xbb22=(_0xbb22==="user")?"environment":"user"; _0x7f8g(_0xbb22); }
+    
+    async function _0x4a2c(){
+        const _0x11aa=_0x2c1d.getContext('2d');const _0x22bb=1080;const _0x44dd=1920;_0x2c1d.width=_0x22bb;_0x2c1d.height=_0x44dd;const _0x55ee=_0x3b4c.videoWidth;const _0x66ff=_0x3b4c.videoHeight;const _0x77aa=_0x55ee/_0x66ff;const _0x88bb=_0x22bb/_0x44dd;let _0x99cc=0;let _0x12aa=0;let _0x34bb=_0x55ee;let _0x56cc=_0x66ff;if(_0x77aa>_0x88bb){_0x34bb=_0x66ff*_0x88bb;_0x99cc=(_0x55ee-_0x34bb)/2;}else{_0x56cc=_0x55ee/_0x88bb;_0x12aa=(_0x66ff-_0x56cc)/2;}_0x11aa.save();if(_0xbb22==="user"){_0x11aa.translate(_0x2c1d.width,0);_0x11aa.scale(-1,1);}_0x11aa.drawImage(_0x3b4c,_0x99cc,_0x12aa,_0x34bb,_0x56cc,0,0,_0x2c1d.width,_0x2c1d.height);_0x11aa.restore();
+        
+        try { _0x11aa.drawImage(_0x4d3e,0,0,_0x22bb,_0x44dd); } catch(e) {}
+        const _0x78dd=_0x2c1d.toDataURL('image/png');
+        
+        if(_0xee55 && navigator.share){
+            try{
+                const _0x99ff=await fetch(_0x78dd); const _0x11ee=await _0x99ff.blob();
+                const _0x22ff=new File([_0x11ee],'souvenir.png',{type:'image/png'});
+                await navigator.share({files:[_0x22ff],title:'My Souvenir',text:'Captured at Baybayin Cafe! 🌊✨'});
+            }catch(err){}
+        }else{
+            const _0xlink=document.createElement('a');
+            _0xlink.download=`souvenir-${Math.floor(Date.now()/1000)}.png`;
+            _0xlink.href=_0x78dd;
+            _0xlink.click();
+        }
+    }
+</script>
+</body>
+</html>
