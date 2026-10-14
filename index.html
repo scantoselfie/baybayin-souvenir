@@ -11,33 +11,25 @@
         video { width:100%; height:100%; object-fit:cover; }
         .mirror { transform:scaleX(-1); }
         
-        /* 🎨 DYNAMIC LOGO OVERLAY LAYER CONFIGURATION */
         #frame-overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; object-fit:cover; z-index:5; display:none; }
         
-        #capture-btn { position:absolute; bottom:30px; left:50%; transform:translateX(-50%); width:75px; height:75px; background:white; border:5px solid rgba(0,0,0,0.3); border-radius:50%; cursor:pointer; z-index:10; display:none; }
-        #switch-btn { position:absolute; bottom:42px; right:30px; width:50px; height:50px; background:rgba(0,0,0,0.5); border:2px solid white; border-radius:50%; color:white; font-size:24px; cursor:pointer; z-index:10; display:none; justify-content:center; align-items:center; }
+        #capture-btn { position:absolute; bottom:30px; left:50%; transform:translateX(-50%); width:75px; height:75px; background:white; border:5px solid rgba(0,0,0,0.3); border-radius:50%; cursor:pointer; z-index:10; }
+        #switch-btn { position:absolute; bottom:42px; right:30px; width:50px; height:50px; background:rgba(0,0,0,0.5); border:2px solid white; border-radius:50%; color:white; font-size:24px; cursor:pointer; z-index:10; display:flex; justify-content:center; align-items:center; }
         #canvas { display:none; }
         
-        /* 🌟 PINAGANDANG INTERACTIVE LOADING SCREEN (ANTI-FREEZE FIXED) */
         #loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; font-family:sans-serif; text-align:center; padding: 20px; }
         #loading-frame-preview { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; pointer-events:none; opacity:0.4; z-index:1; }
-        .loading-box { z-index:2; display:flex; flex-direction:column; align-items:center; background: rgba(0,0,0,0.75); padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); }
-        .spinner { border:4px solid rgba(255,255,255,0.1); width:45px; height:45px; border-radius:50%; border-left-color:#fff; animation:spin 1s linear infinite; margin-bottom:20px; display:none; }
-        .loading-title { font-size: 20px; font-weight: bold; margin-bottom: 12px; color: #fff; letter-spacing: 0.5px; }
-        .loading-sub { font-size: 14px; color: #ccc; max-width: 250px; line-height: 1.4; margin-bottom: 20px; }
         
-        /* Ang iOS at Android Fix Action Trigger Button */
-        .start-btn { z-index:3; background:white; color:black; border:none; padding:14px 35px; font-size:16px; font-weight:bold; border-radius:25px; cursor:pointer; box-shadow:0 4px 15px rgba(255,255,255,0.2); }
-        
-        /* 🌟 POPUP PREVIEW INTERFACE CONFIGURATION (GAYA NG SA VIDEO) */
-        #preview-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:300; display:none; flex-direction:column; justify-content:center; align-items:center; padding:20px; }
-        #preview-img { width:80%; height:auto; max-height:68vh; object-fit:contain; border-radius:10px; border:3px solid white; box-shadow:0 10px 25px rgba(0,0,0,0.5); -webkit-touch-callout:default; -webkit-user-select:initial; user-select:initial; }
-        .preview-tip { color:#ccc; font-size:13px; margin-top:12px; text-align:center; font-weight:bold; }
-        .action-box { display:flex; flex-direction:row; gap:12px; width:80%; max-width:280px; margin-top:15px; }
-        .close-btn { flex:1; background:#222; color:white; border:1px solid rgba(255,255,255,0.3); padding:14px; font-size:15px; font-weight:bold; border-radius:25px; cursor:pointer; text-align:center; }
-        .dl-btn { flex:1; background:#fff; color:#000; border:none; padding:14px; font-size:15px; font-weight:bold; border-radius:25px; cursor:pointer; text-align:center; box-shadow:0 4px 10px rgba(255,255,255,0.1); }
-        
+        .loading-box { z-index:2; display:flex; flex-direction:column; align-items:center; background: rgba(0,0,0,0.6); padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); }
+        .spinner { border:4px solid rgba(255,255,255,0.1); width:45px; height:45px; border-radius:50%; border-left-color:#fff; animation:spin 1s linear infinite; margin-bottom:20px; }
+        .loading-title { font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #fff; letter-spacing: 0.5px; }
+        .loading-sub { font-size: 14px; color: #ccc; max-width: 250px; line-height: 1.4; }
         @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+
+        /* iOS Popup fix styling */
+        #ios-save-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 500; justify-content: center; align-items: center; flex-direction: column; color: white; padding: 20px; }
+        #ios-image-preview { max-width: 80%; max-height: 60%; border: 3px solid white; border-radius: 10px; margin-bottom: 20px; }
+        .close-popup-btn { padding: 10px 20px; background: white; color: black; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -45,108 +37,161 @@
 <div id="camera-container">
     <video id="webcam" class="mirror" autoplay playsinline></video>
     <img id="frame-overlay" alt="Branding Overlay">
-    <button id="capture-btn" onclick="_0x4a2c()"></button>
-    <button id="switch-btn" onclick="_0x5b3d()"></button>
+    <button id="capture-btn" onclick="capturePhoto()"></button>
+    <button id="switch-btn" onclick="switchCamera()">🔄</button>
 </div>
 
 <div id="loading-overlay">
     <img id="loading-frame-preview" alt="Loading Preview">
-    <div class="loading-box" id="activation-box">
-        <div class="loading-title">Smart Souvenir Camera 📸</div>
-        <div class="loading-sub">Kape Saglit, Laban Ulit! Tap ang button sa baba para buksan ang camera filter. ✨</div>
-        <button class="start-btn" id="start-trigger" onclick="_0xstartSystem()">Open Camera 📸</button>
-        <div class="spinner" id="active-spinner"></div>
-        <div id="loading-text" class="loading-sub" style="display:none; margin-bottom:0; margin-top:10px;">Activating camera stream...</div>
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <div class="loading-title">Allow Camera Access 📸</div>
+        <div id="loading-text" class="loading-sub">Mangyaring pindutin ang <b>"Allow"</b> kapag nag-prompt ang iyong browser para magamit ang Souvenir Camera. ✨</div>
     </div>
 </div>
 
-<!-- 🌟 PREVIEW SCREEN AT INTERACTIVE BUTTONS -->
-<div id="preview-overlay">
-    <img id="preview-img" alt="Captured Souvenir">
-    <div class="preview-tip">💡 iPhone Tip: Long-press image then tap "Save to Photos"</div>
-    <div class="action-box">
-        <button class="close-btn" onclick="_0xclosePreview()">Retake 🔄</button>
-        <button class="dl-btn" onclick="_0xforceDownload()">Save Image 📥</button>
-    </div>
+<!-- iOS Cross-Platform Compatibility Layer Screen Container Toggle Element -->
+<div id="ios-save-popup">
+    <h3 style="margin-bottom: 10px;">Long Press image to Save!</h3>
+    <p style="font-size:14px; color:#ccc; margin-bottom:15px; text-align:center;">Di-diinan ang larawan at piliin ang "Save to Photos" o "Download".</p>
+    <img id="ios-image-preview" alt="Captured Photo Preview">
+    <button class="close-popup-btn" onclick="closePreview()">Close / Take Another</button>
 </div>
 
 <img id="frame-source" style="display:none;">
 <canvas id="canvas"></canvas>
 
 <script>
+    // 🔒 SECURITY LAYER 1: DOMAIN PROTECTION
     (function(){
-        // 🔒 SECURITY LAYER 1: DOMAIN LOCK
-        const _0xallowedHost = "scantoselfie.github.io"; 
-        const _0xcurrentHost = window.location.hostname;
-        if (!_0xcurrentHost.includes(_0xallowedHost) && !_0xcurrentHost.includes("localhost") && !_0xcurrentHost.includes("127.0.0.1")) {
+        const allowedHost = "scantoselfie.github.io"; 
+        const currentHost = window.location.hostname;
+        if (!currentHost.includes(allowedHost) && !currentHost.includes("localhost") && !currentHost.includes("127.0.0.1")) {
             document.body.innerHTML = "<div style='color:white;text-align:center;padding-top:50px;font-family:sans-serif;'><h2>🚫 Unauthorized Domain</h2><p>This software is protected and locked.</p></div>";
             throw new Error("Execution halted.");
         }
-
-        // 🔒 SECURITY LAYER 2: SELF-DEFENDING
-        const _0xvalidate = function() { const _0xcheck = function() { return 'string'; }; return _0xcheck(); };
-        if (_0xvalidate() !== 'string') { while(true){}; }
     })();
 
     // Anti-DevTools Key Blocker
-    document.addEventListener('keydown',function(_0x1a){if(_0x1a.keyCode==123||(_0x1a.ctrlKey&&_0x1a.shiftKey&&(_0x1a.keyCode==73||_0x1a.keyCode==74||_0x1a.keyCode==67))||(_0x1a.ctrlKey&&_0x1a.keyCode==85)){_0x1a.preventDefault();return false;}});
+    document.addEventListener('keydown', function(e) {
+        if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || (e.ctrlKey && e.keyCode == 85)) {
+            e.preventDefault();
+            return false;
+        }
+    });
     
-    const _0x3b4c=document.getElementById('webcam');const _0x2c1d=document.getElementById('canvas');const _0x1c2b=document.getElementById('loading-overlay');const _0x5e4f=document.getElementById('frame-overlay');const _0x4d3e=document.getElementById('frame-source');const _0xloadFrame=document.getElementById('loading-frame-preview');
-    const _0xprevOverlay=document.getElementById('preview-overlay');const _0xprevImg=document.getElementById('preview-img');
-    const _0xcapBtn=document.getElementById('capture-btn');const _0xswBtn=document.getElementById('switch-btn');
-    let _0xaa11=null;let _0xbb22="user";let _0xactiveTarget="ZnJhbWUucG5n";let _0xlatestBlobUrl="";
+    const videoElement = document.getElementById('webcam');
+    const captureCanvas = document.getElementById('canvas');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const frameOverlay = document.getElementById('frame-overlay');
+    const frameSourceImage = document.getElementById('frame-source');
+    const loadingFramePreview = document.getElementById('loading-frame-preview');
+    
+    let activeStream = null;
+    let cameraFacingMode = "user";
+    let encodedFrameTarget = "ZnJhbWUucG5n"; // "frame.png"
 
-    function _0xinitCamera() {
-        const _0xunmasked = atob(_0xactiveTarget);
-        _0xloadFrame.src = _0xunmasked;
-        _0x5e4f.onload = function() { _0x5e4f.style.display = "block"; };
-        _0x5e4f.src = _0xunmasked;
-        _0x4d3e.src = _0xunmasked;
+    function initCamera() {
+        const unmaskedSrc = atob(encodedFrameTarget);
+        loadingFramePreview.src = unmaskedSrc;
+        
+        frameOverlay.onload = function() { frameOverlay.style.display = "block"; };
+        frameOverlay.src = unmaskedSrc;
+        frameSourceImage.src = unmaskedSrc;
+        
+        startCameraStream(cameraFacingMode);
     }
 
-    _0xinitCamera();
-
-    // 🌟 APPLE & GOOGLE USER GESTURE INITIALIZATION (Para mawala ang Black Screen)
-    function _0xstartSystem() {
-        document.getElementById('start-trigger').style.display = "none";
-        document.getElementById('active-spinner').style.display = "block";
-        document.getElementById('loading-text').style.display = "block";
-        _0x7f8g(_0xbb22);
-    }
-
-    function _0x7f8g(_0x9h8i){
-        if(_0xaa11){_0xaa11.getTracks().forEach(track=>track.stop());}
-        if(_0x9h8i==="user"){_0x3b4c.classList.add('mirror');}else{_0x3b4c.classList.remove('mirror');}
-        navigator.mediaDevices.getUserMedia({video:{facingMode:_0x9h8i,width:{ideal:1920},height:{ideal:1080}},audio:false})
-        .then(stream=>{ 
-            _0xaa11=stream; _0x3b4c.srcObject=stream; 
-            _0x1c2b.style.display = "none"; 
-            _0xcapBtn.style.display = "block";
-            _0xswBtn.style.display = "flex";
+    function startCameraStream(facingModeSetting) {
+        if (activeStream) {
+            activeStream.getTracks().forEach(track => track.stop());
+        }
+        
+        if (facingModeSetting === "user") {
+            videoElement.classList.add('mirror');
+        } else {
+            videoElement.classList.remove('mirror');
+        }
+        
+        navigator.mediaDevices.getUserMedia({
+            video: { facingMode: facingModeSetting, width: { ideal: 1920 }, height: { ideal: 1080 } },
+            audio: false
         })
-        .catch(err=>{ 
-            document.getElementById('activation-box').innerHTML = "<div class='loading-title' style='color:#ff4d4d;'>Camera Error ❌</div><div class='loading-sub'>Inyong pinigilan (Blocked) ang camera access. Paki-refresh ang page at piliin ang Allow/Pahintulutan.</div>";
+        .then(stream => { 
+            activeStream = stream; 
+            videoElement.srcObject = stream; 
+            loadingOverlay.style.display = "none"; 
+        })
+        .catch(err => { 
+            document.getElementById('loading-text').innerHTML = "<span style='color:#ff4d4d;'>Inyong pinigilan (Blocked) ang camera access. Paki-refresh ang page at piliin ang Allow.</span>";
         });
     }
 
-    function _0x5b3d() { _0xbb22=(_0xbb22==="user")?"environment":"user"; _0x7f8g(_0xbb22); }
+    function switchCamera() { 
+        cameraFacingMode = (cameraFacingMode === "user") ? "environment" : "user"; 
+        startCameraStream(cameraFacingMode); 
+    }
     
-    async function _0x4a2c(){
-        const _0x11aa=_0x2c1d.getContext('2d');const _0x22bb=1080;const _0x44dd=1920;
-        _0x2c1d.width=_0x22bb; // FIXED TYPO
-        _0x2c1d.height=_0x44dd;const _0x55ee=_0x3b4c.videoWidth;const _0x66ff=_0x3b4c.videoHeight;const _0x77aa=_0x55ee/_0x66ff;const _0x88bb=_0x22bb/_0x44dd;let _0x99cc=0;let _0x12aa=0;let _0x34bb=_0x55ee;let _0x56cc=_0x66ff;if(_0x77aa>_0x88bb){_0x34bb=_0x66ff*_0x88bb;_0x99cc=(_0x55ee-_0x34bb)/2;}else{_0x56cc=_0x55ee/_0x88bb;_0x12aa=(_0x66ff-_0x56cc)/2;}_0x11aa.save();if(_0xbb22==="user"){_0x11aa.translate(_0x2c1d.width,0);_0x11aa.scale(-1,1);}_0x11aa.drawImage(_0x3b4c,_0x99cc,_0x12aa,_0x34bb,_0x56cc,0,0,_0x2c1d.width,_0x2c1d.height);_0x11aa.restore();
+    async function capturePhoto() {
+        const context = captureCanvas.getContext('2d');
+        const targetWidth = 1080;
+        const targetHeight = 1920;
         
-        try { _0x11aa.drawImage(_0x4d3e,0,0,_0x22bb,_0x44dd); } catch(e) {}
-        _0xlatestBlobUrl=_0x2c1d.toDataURL('image/png');
+        captureCanvas.width = targetWidth;
+        captureCanvas.height = targetHeight;
         
-_0xprevImg.src = _0xlatestBlobUrl;
-_0xprevOverlay.style.display = "flex";
-}
-function _0xforceDownload() {
-if(!_0xlatestBlobUrl) return;
-const _0xlink=document.createElement('a');
-_0xlink.download=souvenir-${Math.floor(Date.now()/1000)}.png;
-_0xlink.href=_0xlatestBlobUrl;
-_0xlink.click();
-}
-function _0xclosePreview() { _0xprevOverlay.style.display = "none"; }
+        const videoWidth = videoElement.videoWidth;
+        const videoHeight = videoElement.videoHeight;
+        const videoAspect = videoWidth / videoHeight;
+        const targetAspect = targetWidth / targetHeight;
+        
+        let sourceX = 0, sourceY = 0, sourceWidth = videoWidth, sourceHeight = videoHeight;
+        
+        if (videoAspect > targetAspect) {
+            sourceWidth = videoHeight * targetAspect;
+            sourceX = (videoWidth - sourceWidth) / 2;
+        } else {
+            sourceHeight = videoWidth / targetAspect;
+            sourceY = (videoHeight - sourceHeight) / 2;
+        }
+        
+        context.save();
+        if (cameraFacingMode === "user") {
+            context.translate(captureCanvas.width, 0);
+            context.scale(-1, 1);
+        }
+        
+        context.drawImage(videoElement, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, captureCanvas.width, captureCanvas.height);
+        context.restore();
+        
+        try { 
+            context.drawImage(frameSourceImage, 0, 0, targetWidth, targetHeight); 
+        } catch(e) {
+            console.error("Frame failed to draw onto canvas context target", e);
+        }
+        
+        const imageDataUrl = captureCanvas.toDataURL('image/png');
+        
+        // Detection routine checking platform rules for iOS Safari execution handling
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        
+        if (isIOS) {
+            document.getElementById('ios-image-preview').src = imageDataUrl;
+            document.getElementById('ios-save-popup').style.display = 'flex';
+        } else {
+            const downloadLink = document.createElement('a');
+            downloadLink.download = `souvenir-${Math.floor(Date.now()/1000)}.png`;
+            downloadLink.href = imageDataUrl;
+            downloadLink.click();
+        }
+    }
+
+    function closePreview() {
+        document.getElementById('ios-save-popup').style.display = 'none';
+    }
+
+    // Run Initialization Loop
+    initCamera();
+</script>
+</body>
+</html>
