@@ -5,20 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Souvenir Camera</title>
     <style>
-        /* ⚠️ INALIS ANG -webkit-touch-callout: none; PARA GUMANA ANG LONG PRESS SA IOS */
-        * { margin:0; padding:0; box-sizing:border-box; -webkit-user-select:none; user-select:none; }
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
         body, html { width:100%; height:100%; overflow:hidden; background:#000; font-family:sans-serif; }
         #camera-container { position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center; overflow:hidden; }
         video { width:100%; height:100%; object-fit:cover; }
         .mirror { transform:scaleX(-1); }
         
+        /* 🎨 DYNAMIC LOGO OVERLAY LAYER CONFIGURATION */
         #frame-overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; object-fit:cover; z-index:5; display:none; }
         
         #capture-btn { position:absolute; bottom:30px; left:50%; transform:translateX(-50%); width:75px; height:75px; background:white; border:5px solid rgba(0,0,0,0.3); border-radius:50%; cursor:pointer; z-index:10; }
         #switch-btn { position:absolute; bottom:42px; right:30px; width:50px; height:50px; background:rgba(0,0,0,0.5); border:2px solid white; border-radius:50%; color:white; font-size:24px; cursor:pointer; z-index:10; display:flex; justify-content:center; align-items:center; }
         #canvas { display:none; }
         
+        /* 🌟 PINAGANDANG LOADING OVERLAY NA MAY BRANDING */
         #loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; font-family:sans-serif; text-align:center; padding: 20px; }
+        
+        /* Dito ipapakita ang filter/frame sa background ng loading window */
         #loading-frame-preview { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; pointer-events:none; opacity:0.4; z-index:1; }
         
         .loading-box { z-index:2; display:flex; flex-direction:column; align-items:center; background: rgba(0,0,0,0.6); padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); }
@@ -26,14 +29,6 @@
         .loading-title { font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #fff; letter-spacing: 0.5px; }
         .loading-sub { font-size: 14px; color: #ccc; max-width: 250px; line-height: 1.4; }
         @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
-
-        /* iOS Popup Screen Area Configuration */
-        #ios-save-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 500; justify-content: center; align-items: center; flex-direction: column; color: white; padding: 20px; }
-        
-        /* ✨ iOS LONG PRESS FIX: Pinwersa ang Apple system na payagan ang Long-Press save function */
-        #ios-image-preview { max-width: 80%; max-height: 60%; border: 3px solid white; border-radius: 10px; margin-bottom: 20px; -webkit-touch-callout: default !important; -webkit-user-select: auto !important; user-select: auto !important; pointer-events: auto !important; }
-        
-        .close-popup-btn { padding: 10px 20px; background: white; color: black; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -41,165 +36,84 @@
 <div id="camera-container">
     <video id="webcam" class="mirror" autoplay playsinline></video>
     <img id="frame-overlay" alt="Branding Overlay">
-    <button id="capture-btn" onclick="capturePhoto()"></button>
-    <button id="switch-btn" onclick="switchCamera()">🔄</button>
+    <button id="capture-btn" onclick="_0x4a2c()"></button>
+    <button id="switch-btn" onclick="_0x5b3d()"></button>
 </div>
 
 <div id="loading-overlay">
+    <!-- Bakgrawnd na filter para makita agad ng customer ang vibe ng store -->
     <img id="loading-frame-preview" alt="Loading Preview">
     <div class="loading-box">
-        <div id="loading-spinner" class="spinner"></div>
-        <div id="loading-title" class="loading-title">Allow Camera Access 📸</div>
+        <div class="spinner"></div>
+        <div class="loading-title">Allow Camera Access 📸</div>
         <div id="loading-text" class="loading-sub">Mangyaring pindutin ang <b>"Allow"</b> kapag nag-prompt ang iyong browser para magamit ang Souvenir Camera. ✨</div>
     </div>
 </div>
-
-<div id="ios-save-popup">
-    <h3 style="margin-bottom: 10px;">Long Press image to Save!</h3>
-    <p style="font-size:14px; color:#ccc; margin-bottom:15px; text-align:center;">Di-diinan ang larawan at piliin ang "Save to Photos" o "Download".</p>
-    <img id="ios-image-preview" alt="Captured Photo Preview">
-    <button class="close-popup-btn" onclick="closePreview()">Close / Take Another</button>
-</div>
-
 <img id="frame-source" style="display:none;">
 <canvas id="canvas"></canvas>
 
 <script>
-    // 🔒 SECURITY LAYER 1: DOMAIN PROTECTION
     (function(){
-        const allowedHost = "scantoselfie.github.io"; 
-        const currentHost = window.location.hostname;
-        if (!currentHost.includes(allowedHost) && !currentHost.includes("localhost") && !currentHost.includes("127.0.0.1")) {
+        // 🔒 SECURITY LAYER 1: DOMAIN LOCK
+        const _0xallowedHost = "scantoselfie.github.io"; 
+        const _0xcurrentHost = window.location.hostname;
+        if (!_0xcurrentHost.includes(_0xallowedHost) && !_0xcurrentHost.includes("localhost") && !_0xcurrentHost.includes("127.0.0.1")) {
             document.body.innerHTML = "<div style='color:white;text-align:center;padding-top:50px;font-family:sans-serif;'><h2>🚫 Unauthorized Domain</h2><p>This software is protected and locked.</p></div>";
             throw new Error("Execution halted.");
         }
+
+        // 🔒 SECURITY LAYER 2: SELF-DEFENDING
+        const _0xvalidate = function() { const _0xcheck = function() { return 'string'; }; return _0xcheck(); };
+        if (_0xvalidate() !== 'string') { while(true){}; }
     })();
 
     // Anti-DevTools Key Blocker
-    document.addEventListener('keydown', function(e) {
-        if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || (e.ctrlKey && e.keyCode == 85)) {
-            e.preventDefault();
-            return false;
-        }
-    });
+    document.addEventListener('keydown',function(_0x1a){if(_0x1a.keyCode==123||(_0x1a.ctrlKey&&_0x1a.shiftKey&&(_0x1a.keyCode==73||_0x1a.keyCode==74||_0x1a.keyCode==67))||(_0x1a.ctrlKey&&_0x1a.keyCode==85)){_0x1a.preventDefault();return false;}});
     
-    const videoElement = document.getElementById('webcam');
-    const captureCanvas = document.getElementById('canvas');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const frameOverlay = document.getElementById('frame-overlay');
-    const frameSourceImage = document.getElementById('frame-source');
-    const loadingFramePreview = document.getElementById('loading-frame-preview');
-    
-    let activeStream = null;
-    let cameraFacingMode = "user";
-    let encodedFrameTarget = "ZnJhbWUucG5n"; // "frame.png"
+    const _0x3b4c=document.getElementById('webcam');const _0x2c1d=document.getElementById('canvas');const _0x1c2b=document.getElementById('loading-overlay');const _0x5e4f=document.getElementById('frame-overlay');const _0x4d3e=document.getElementById('frame-source');const _0xloadFrame=document.getElementById('loading-frame-preview');
+    let _0xaa11=null;let _0xbb22="user";let _0xactiveTarget="ZnJhbWUucG5n"; 
 
-    function initCamera() {
-        const unmaskedSrc = atob(encodedFrameTarget);
-        loadingFramePreview.src = unmaskedSrc;
+    function _0xinitCamera() {
+        const _0xunmasked = atob(_0xactiveTarget);
         
-        frameOverlay.onload = function() { frameOverlay.style.display = "block"; };
-        frameOverlay.src = unmaskedSrc;
-        frameSourceImage.src = unmaskedSrc;
+        // I-load ang image sa background ng loading screen para makita agad ang branding
+        _0xloadFrame.src = _0xunmasked;
         
-        // 🧭 ✨ IN-APP BROWSER DETECTOR (ANTI-STUCK ENGINE)
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const isInApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1) || (ua.indexOf("TikTok") > -1) || (ua.indexOf("Messenger") > -1) || (ua.indexOf("Line") > -1);
-
-        if (isIOS && isInApp) {
-            // Pinapatay ang ikot ng spinner at binabago ang UI para magbigay ng manual instructions
-            document.getElementById('loading-spinner').style.display = 'none';
-            document.getElementById('loading-title').innerText = "⚠️ Browser Restriction";
-            document.getElementById('loading-text').innerHTML = "<span style='color:#ffcc00; font-weight:bold;'>Bawal ang camera sa app na ito. Pindutin ang tatlong tuldok (...) sa kanang ibaba at piliin ang 'Open in Safari' para kumuha ng larawan. 🧭</span>";
-            return; // Pinipigilan ang code na mag-stuck sa infinite stream loop
-        }
-        
-        startCameraStream(cameraFacingMode);
+        _0x5e4f.onload = function() { _0x5e4f.style.display = "block"; };
+        _0x5e4f.src = _0xunmasked;
+        _0x4d3e.src = _0xunmasked;
+        _0x7f8g(_0xbb22);
     }
 
-    function startCameraStream(facingModeSetting) {
-        if (activeStream) {
-            activeStream.getTracks().forEach(track => track.stop());
-        }
-        
-        if (facingModeSetting === "user") {
-            videoElement.classList.add('mirror');
-        } else {
-            videoElement.classList.remove('mirror');
-        }
-        
-        navigator.mediaDevices.getUserMedia({
-            video: { facingMode: facingModeSetting, width: { ideal: 1920 }, height: { ideal: 1080 } },
-            audio: false
+    _0xinitCamera();
+
+    function _0x7f8g(_0x9h8i){
+        if(_0xaa11){_0xaa11.getTracks().forEach(track=>track.stop());}
+        if(_0x9h8i==="user"){_0x3b4c.classList.add('mirror');}else{_0x3b4c.classList.remove('mirror');}
+        navigator.mediaDevices.getUserMedia({video:{facingMode:_0x9h8i,width:{ideal:1920},height:{ideal:1080}},audio:false})
+        .then(stream=>{ 
+            _0xaa11=stream; _0x3b4c.srcObject=stream; 
+            _0x1c2b.style.display = "none"; 
         })
-        .then(stream => { 
-            activeStream = stream; 
-            videoElement.srcObject = stream; 
-            loadingOverlay.style.display = "none"; 
-        })
-        .catch(err => { 
-            document.getElementById('loading-spinner').style.display = 'none';
-            document.getElementById('loading-title').innerText = "❌ Access Denied";
+        .catch(err=>{ 
             document.getElementById('loading-text').innerHTML = "<span style='color:#ff4d4d;'>Inyong pinigilan (Blocked) ang camera access. Paki-refresh ang page at piliin ang Allow.</span>";
         });
     }
 
-    function switchCamera() { 
-        cameraFacingMode = (cameraFacingMode === "user") ? "environment" : "user"; 
-        startCameraStream(cameraFacingMode); 
-    }
+    function _0x5b3d() { _0xbb22=(_0xbb22==="user")?"environment":"user"; _0x7f8g(_0xbb22); }
     
-    async function capturePhoto() {
-        const context = captureCanvas.getContext('2d');
-        const targetWidth = 1080;
-        const targetHeight = 1920;
+    async function _0x4a2c(){
+        const _0x11aa=_0x2c1d.getContext('2d');const _0x22bb=1080;const _0x44dd=1920;_0x2c1d.width=_0x22bb;_0x2c1d.height=_0x44dd;const _0x55ee=_0x3b4c.videoWidth;const _0x66ff=_0x3b4c.videoHeight;const _0x77aa=_0x55ee/_0x66ff;const _0x88bb=_0x22bb/_0x44dd;let _0x99cc=0;let _0x12aa=0;let _0x34bb=_0x55ee;let _0x56cc=_0x66ff;if(_0x77aa>_0x88bb){_0x34bb=_0x66ff*_0x88bb;_0x99cc=(_0x55ee-_0x34bb)/2;}else{_0x56cc=_0x55ee/_0x88bb;_0x12aa=(_0x66ff-_0x56cc)/2;}_0x11aa.save();if(_0xbb22==="user"){_0x11aa.translate(_0x2c1d.width,0);_0x11aa.scale(-1,1);}_0x11aa.drawImage(_0x3b4c,_0x99cc,_0x12aa,_0x34bb,_0x56cc,0,0,_0x2c1d.width,_0x2c1d.height);_0x11aa.restore();
         
-        captureCanvas.width = targetWidth;
-        captureCanvas.height = targetHeight;
+        try { _0x11aa.drawImage(_0x4d3e,0,0,_0x22bb,_0x44dd); } catch(e) {}
+        const _0x78dd=_0x2c1d.toDataURL('image/png');
         
-        const videoWidth = videoElement.videoWidth;
-        const videoHeight = videoElement.videoHeight;
-        const videoAspect = videoWidth / videoHeight;
-        const targetAspect = targetWidth / targetHeight;
-        
-        let sourceX = 0, sourceY = 0, sourceWidth = videoWidth, sourceHeight = videoHeight;
-        
-        if (videoAspect > targetAspect) {
-            sourceWidth = videoHeight * targetAspect;
-            sourceX = (videoWidth - sourceWidth) / 2;
-        } else {
-            sourceHeight = videoWidth / targetAspect;
-            sourceY = (videoHeight - sourceHeight) / 2;
-        }
-        
-        context.save();
-        if (cameraFacingMode === "user") {
-            context.translate(captureCanvas.width, 0);
-            context.scale(-1, 1);
-        }
-        
-context.drawImage(videoElement, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, captureCanvas.width, captureCanvas.height);
-context.restore();
-try {
-context.drawImage(frameSourceImage, 0, 0, targetWidth, targetHeight);
-} catch(e) {
-console.error("Frame failed to draw onto canvas context target", e);
-}
-const imageDataUrl = captureCanvas.toDataURL('image/png');
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-if (isIOS) {
-document.getElementById('ios-image-preview').src = imageDataUrl;
-document.getElementById('ios-save-popup').style.display = 'flex';
-} else {
-const downloadLink = document.createElement('a');
-downloadLink.download = souvenir-${Math.floor(Date.now()/1000)}.png;
-downloadLink.href = imageDataUrl;
-downloadLink.click();
-}
-}
-function closePreview() {
-document.getElementById('ios-save-popup').style.display = 'none';
-}
-// Patakbuhin ang initialization lifecycle
-initCamera();
+        // Diretsong download para sa LAHAT ng devices (Android at iOS)
+        const _0xlink=document.createElement('a');
+        _0xlink.download=`souvenir-${Math.floor(Date.now()/1000)}.png`;
+        _0xlink.href=_0x78dd;
+        _0xlink.click();
+    }
+</script>
+</body>
+</html>
