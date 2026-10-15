@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Souvenir Camera</title>
     <style>
+        /* ⚠️ INALIS ANG -webkit-touch-callout: none; PARA GUMANA ANG LONG PRESS SA IOS */
         * { margin:0; padding:0; box-sizing:border-box; -webkit-user-select:none; user-select:none; }
         body, html { width:100%; height:100%; overflow:hidden; background:#000; font-family:sans-serif; }
         #camera-container { position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center; overflow:hidden; }
@@ -26,8 +27,10 @@
         .loading-sub { font-size: 14px; color: #ccc; max-width: 250px; line-height: 1.4; }
         @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
 
-        /* iOS Popup Screen Structure */
+        /* iOS Popup Screen Area Configuration */
         #ios-save-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 500; justify-content: center; align-items: center; flex-direction: column; color: white; padding: 20px; }
+        
+        /* ✨ iOS LONG PRESS FIX: Pinwersa ang Apple system na payagan ang Long-Press save function */
         #ios-image-preview { max-width: 80%; max-height: 60%; border: 3px solid white; border-radius: 10px; margin-bottom: 20px; -webkit-touch-callout: default !important; -webkit-user-select: auto !important; user-select: auto !important; pointer-events: auto !important; }
         
         .close-popup-btn { padding: 10px 20px; background: white; color: black; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
@@ -45,7 +48,6 @@
 <div id="loading-overlay">
     <img id="loading-frame-preview" alt="Loading Preview">
     <div class="loading-box">
-        <!-- Pwede nating lagyan ng id ang spinner para maitago kung kailangan -->
         <div id="loading-spinner" class="spinner"></div>
         <div id="loading-title" class="loading-title">Allow Camera Access 📸</div>
         <div id="loading-text" class="loading-sub">Mangyaring pindutin ang <b>"Allow"</b> kapag nag-prompt ang iyong browser para magamit ang Souvenir Camera. ✨</div>
@@ -100,17 +102,17 @@
         frameOverlay.src = unmaskedSrc;
         frameSourceImage.src = unmaskedSrc;
         
-        // ✨ DITO MISMONG CHE-CHECK KUNG NASA IN-APP BROWSER ANG CUSTOMER (Tulad ng TikTok)
+        // 🧭 ✨ IN-APP BROWSER DETECTOR (ANTI-STUCK ENGINE)
         const ua = navigator.userAgent || navigator.vendor || window.opera;
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const isInApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1) || (ua.indexOf("TikTok") > -1) || (ua.indexOf("Messenger") > -1);
+        const isInApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1) || (ua.indexOf("TikTok") > -1) || (ua.indexOf("Messenger") > -1) || (ua.indexOf("Line") > -1);
 
         if (isIOS && isInApp) {
-            // Kung nasa loob ng app browser sa iPhone, baguhin ang screen at huwag patakbuhin ang camera
+            // Pinapatay ang ikot ng spinner at binabago ang UI para magbigay ng manual instructions
             document.getElementById('loading-spinner').style.display = 'none';
             document.getElementById('loading-title').innerText = "⚠️ Browser Restriction";
-            document.getElementById('loading-text').innerHTML = "<span style='color:#ffcc00; font-weight:bold;'>Pindutin ang tatlong tuldok (...) sa kanang ibaba ng screen at piliin ang 'Open in Safari' para magamit ang camera. 🧭</span>";
-            return; // Hinto rito para hindi mag-stuck sa loading spinner
+            document.getElementById('loading-text').innerHTML = "<span style='color:#ffcc00; font-weight:bold;'>Bawal ang camera sa app na ito. Pindutin ang tatlong tuldok (...) sa kanang ibaba at piliin ang 'Open in Safari' para kumuha ng larawan. 🧭</span>";
+            return; // Pinipigilan ang code na mag-stuck sa infinite stream loop
         }
         
         startCameraStream(cameraFacingMode);
@@ -177,4 +179,27 @@
             context.scale(-1, 1);
         }
         
-        context.drawImage(videoElement, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, captureCanvas.width, captureCanvas.height);
+context.drawImage(videoElement, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, captureCanvas.width, captureCanvas.height);
+context.restore();
+try {
+context.drawImage(frameSourceImage, 0, 0, targetWidth, targetHeight);
+} catch(e) {
+console.error("Frame failed to draw onto canvas context target", e);
+}
+const imageDataUrl = captureCanvas.toDataURL('image/png');
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+if (isIOS) {
+document.getElementById('ios-image-preview').src = imageDataUrl;
+document.getElementById('ios-save-popup').style.display = 'flex';
+} else {
+const downloadLink = document.createElement('a');
+downloadLink.download = souvenir-${Math.floor(Date.now()/1000)}.png;
+downloadLink.href = imageDataUrl;
+downloadLink.click();
+}
+}
+function closePreview() {
+document.getElementById('ios-save-popup').style.display = 'none';
+}
+// Patakbuhin ang initialization lifecycle
+initCamera();
