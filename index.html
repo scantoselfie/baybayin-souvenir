@@ -1,119 +1,464 @@
-<!DOCTYPE html>
+from pathlib import Path
+from zipfile import ZipFile, ZIP_DEFLATED
+
+out = Path("/mnt/data/smart_qr_souvenir_camera")
+out.mkdir(parents=True, exist_ok=True)
+
+html = r'''<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Souvenir Camera</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
-        body, html { width:100%; height:100%; overflow:hidden; background:#000; font-family:sans-serif; }
-        #camera-container { position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center; overflow:hidden; }
-        video { width:100%; height:100%; object-fit:cover; }
-        .mirror { transform:scaleX(-1); }
-        
-        /* 🎨 DYNAMIC LOGO OVERLAY LAYER CONFIGURATION */
-        #frame-overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; object-fit:cover; z-index:5; display:none; }
-        
-        #capture-btn { position:absolute; bottom:30px; left:50%; transform:translateX(-50%); width:75px; height:75px; background:white; border:5px solid rgba(0,0,0,0.3); border-radius:50%; cursor:pointer; z-index:10; }
-        #switch-btn { position:absolute; bottom:42px; right:30px; width:50px; height:50px; background:rgba(0,0,0,0.5); border:2px solid white; border-radius:50%; color:white; font-size:24px; cursor:pointer; z-index:10; display:flex; justify-content:center; align-items:center; }
-        #canvas { display:none; }
-        
-        /* 🌟 PINAGANDANG LOADING OVERLAY NA MAY BRANDING */
-        #loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; font-family:sans-serif; text-align:center; padding: 20px; }
-        
-        /* Dito ipapakita ang filter/frame sa background ng loading window */
-        #loading-frame-preview { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; pointer-events:none; opacity:0.4; z-index:1; }
-        
-        .loading-box { z-index:2; display:flex; flex-direction:column; align-items:center; background: rgba(0,0,0,0.6); padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); }
-        .spinner { border:4px solid rgba(255,255,255,0.1); width:45px; height:45px; border-radius:50%; border-left-color:#fff; animation:spin 1s linear infinite; margin-bottom:20px; }
-        .loading-title { font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #fff; letter-spacing: 0.5px; }
-        .loading-sub { font-size: 14px; color: #ccc; max-width: 250px; line-height: 1.4; }
-        @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101010">
+  <meta name="description" content="A branded souvenir camera for cafes, shops, and events.">
+  <title>Souvenir Camera</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101010;
+      --panel: rgba(20,20,20,.88);
+      --text: #fff;
+      --muted: #c7c7c7;
+      --accent: #fff;
+      --danger: #ff6868;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; min-height: 100%; margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { min-height: 100svh; }
+    button { font: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    button:focus-visible { outline: 3px solid #8bc7ff; outline-offset: 3px; }
+    .app { position: relative; min-height: 100svh; display: flex; flex-direction: column; overflow: hidden; background: #000; }
+    .topbar { position: absolute; z-index: 20; top: 0; left: 0; right: 0; padding: calc(12px + var(--safe-top)) 16px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: linear-gradient(to bottom, rgba(0,0,0,.55), transparent); pointer-events: none; }
+    .brand-title { font-size: 15px; font-weight: 750; letter-spacing: .04em; text-shadow: 0 1px 8px #000; }
+    .status { font-size: 12px; color: #f1f1f1; text-align: right; max-width: 58%; text-shadow: 0 1px 8px #000; }
+    .stage { position: relative; flex: 1; min-height: 100svh; display: grid; place-items: center; overflow: hidden; background: #080808; }
+    .preview-wrap { position: relative; width: 100%; height: 100%; overflow: hidden; background: #090909; }
+    video { display: block; width: 100%; height: 100%; object-fit: cover; }
+    video.mirrored { transform: scaleX(-1); }
+    #liveFrame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
+    .controls { position: absolute; z-index: 15; left: 0; right: 0; bottom: calc(18px + var(--safe-bottom)); padding: 0 24px; display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; justify-items: center; gap: 12px; }
+    .icon-btn { width: 52px; height: 52px; display: inline-grid; place-items: center; border: 1.5px solid rgba(255,255,255,.85); border-radius: 50%; color: white; background: rgba(0,0,0,.48); box-shadow: 0 3px 18px rgba(0,0,0,.24); cursor: pointer; }
+    .icon-btn svg { width: 25px; height: 25px; }
+    .shutter { width: 78px; height: 78px; border-radius: 50%; border: 5px solid rgba(255,255,255,.88); background: #fff; box-shadow: 0 2px 16px rgba(0,0,0,.35); display: grid; place-items: center; cursor: pointer; }
+    .shutter::after { content: ""; display: block; width: 58px; height: 58px; border: 2px solid #222; border-radius: 50%; }
+    button:disabled { opacity: .42; cursor: not-allowed; }
+    .hint { position: absolute; z-index: 12; bottom: calc(112px + var(--safe-bottom)); left: 12px; right: 12px; text-align: center; color: #fff; font-size: 12px; text-shadow: 0 1px 6px #000; pointer-events: none; }
+    .overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 22px; background: rgba(0,0,0,.88); }
+    .overlay[hidden] { display: none !important; }
+    .dialog { width: min(100%, 440px); max-height: calc(100svh - 44px); overflow: auto; border: 1px solid rgba(255,255,255,.15); border-radius: 20px; padding: 22px; background: #171717; box-shadow: 0 18px 60px rgba(0,0,0,.45); text-align: center; }
+    .dialog h1, .dialog h2 { margin: 0 0 10px; font-size: 22px; }
+    .dialog p { margin: 0 0 16px; color: var(--muted); line-height: 1.5; font-size: 14px; }
+    .primary, .secondary { min-height: 48px; padding: 12px 18px; border-radius: 12px; border: 0; font-weight: 700; cursor: pointer; }
+    .primary { width: 100%; background: #fff; color: #111; }
+    .secondary { background: #303030; color: #fff; border: 1px solid #505050; }
+    .actions { display: flex; gap: 10px; margin-top: 14px; }
+    .actions > button { flex: 1; }
+    .preview-image { display: block; width: 100%; max-height: 55svh; object-fit: contain; background: #080808; border-radius: 12px; }
+    .countdown { position: absolute; z-index: 30; inset: 0; display: grid; place-items: center; font-size: clamp(72px, 24vw, 150px); font-weight: 850; color: white; text-shadow: 0 4px 24px #000; background: rgba(0,0,0,.12); pointer-events: none; }
+    .countdown[hidden] { display: none; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #555; border-top-color: white; border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 14px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .small { color: #aaa; font-size: 12px; line-height: 1.45; margin-top: 14px; }
+    .error { color: var(--danger) !important; }
+    .hidden-input { display: none; }
+    @media (orientation: landscape) and (min-width: 700px) {
+      .preview-wrap { width: min(100vw, 56.25svh); height: 100svh; }
+      .stage { background: #101010; }
+    }
+  </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand-title" id="businessTitle">SOUVENIR CAMERA</div>
+      <div class="status" id="cameraStatus" aria-live="polite">Preparing camera…</div>
+    </header>
 
-<div id="camera-container">
-    <video id="webcam" class="mirror" autoplay playsinline></video>
-    <img id="frame-overlay" alt="Branding Overlay">
-    <button id="capture-btn" onclick="_0x4a2c()"></button>
-    <button id="switch-btn" onclick="_0x5b3d()"></button>
-</div>
+    <section class="stage" aria-label="Camera">
+      <div class="preview-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <img id="liveFrame" alt="" aria-hidden="true">
+        <div class="countdown" id="countdown" hidden></div>
+        <div class="hint" id="hint">Position yourself inside the frame</div>
+        <div class="controls">
+          <button class="icon-btn" id="helpButton" type="button" aria-label="Camera help" title="Camera help">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2.1-2.4 3.7"/><path d="M12 17h.01"/></svg>
+          </button>
+          <button class="shutter" id="captureButton" type="button" aria-label="Take photo" disabled></button>
+          <button class="icon-btn" id="switchButton" type="button" aria-label="Switch camera" title="Switch camera" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-3l-1.6-2h-6.8L7 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"/><circle cx="12" cy="13" r="3.5"/><path d="M7 3 4.5 5.5 7 8"/><path d="M4.5 5.5H9"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
 
-<div id="loading-overlay">
-    <!-- Bakgrawnd na filter para makita agad ng customer ang vibe ng store -->
-    <img id="loading-frame-preview" alt="Loading Preview">
-    <div class="loading-box">
-        <div class="spinner"></div>
-        <div class="loading-title">Allow Camera Access 📸</div>
-        <div id="loading-text" class="loading-sub">Mangyaring pindutin ang <b>"Allow"</b> kapag nag-prompt ang iyong browser para magamit ang Souvenir Camera. ✨</div>
+  <section class="overlay" id="startOverlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+    <div class="dialog">
+      <div class="spinner" id="startSpinner" hidden></div>
+      <h1 id="startTitle">Your souvenir photo</h1>
+      <p id="startMessage">Allow camera access when your browser asks. Your photo is processed on this device and is not uploaded by this page.</p>
+      <button class="primary" id="startButton" type="button">Start Camera</button>
+      <p class="small">For camera access, open this page using its secure HTTPS website address.</p>
     </div>
-</div>
-<img id="frame-source" style="display:none;">
-<canvas id="canvas"></canvas>
+  </section>
 
-<script>
-    (function(){
-        // 🔒 SECURITY LAYER 1: DOMAIN LOCK
-        const _0xallowedHost = "scantoselfie.github.io"; 
-        const _0xcurrentHost = window.location.hostname;
-        if (!_0xcurrentHost.includes(_0xallowedHost) && !_0xcurrentHost.includes("localhost") && !_0xcurrentHost.includes("127.0.0.1")) {
-            document.body.innerHTML = "<div style='color:white;text-align:center;padding-top:50px;font-family:sans-serif;'><h2>🚫 Unauthorized Domain</h2><p>This software is protected and locked.</p></div>";
-            throw new Error("Execution halted.");
-        }
+  <section class="overlay" id="photoOverlay" role="dialog" aria-modal="true" aria-labelledby="photoTitle" hidden>
+    <div class="dialog">
+      <h2 id="photoTitle">Your souvenir photo</h2>
+      <p>Love it? Save it to your device. Or retake your photo.</p>
+      <img id="photoPreview" class="preview-image" alt="Your captured souvenir photo">
+      <div class="actions">
+        <button class="secondary" id="retakeButton" type="button">Retake</button>
+        <button class="primary" id="saveButton" type="button">Save Photo</button>
+      </div>
+      <p class="small" id="saveHelp">On some iPhones, use Share and then Save Image if the image opens instead of downloading.</p>
+    </div>
+  </section>
 
-        // 🔒 SECURITY LAYER 2: SELF-DEFENDING
-        const _0xvalidate = function() { const _0xcheck = function() { return 'string'; }; return _0xcheck(); };
-        if (_0xvalidate() !== 'string') { while(true){}; }
-    })();
+  <section class="overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle" hidden>
+    <div class="dialog">
+      <h2 id="helpTitle">Camera help</h2>
+      <p id="helpMessage">If the camera does not start, check your browser's camera permission and make sure no other app is using the camera.</p>
+      <button class="primary" id="retryButton" type="button">Try Camera Again</button>
+      <div style="margin-top:10px"><button class="secondary" id="closeHelpButton" type="button">Close</button></div>
+    </div>
+  </section>
 
-    // Anti-DevTools Key Blocker
-    document.addEventListener('keydown',function(_0x1a){if(_0x1a.keyCode==123||(_0x1a.ctrlKey&&_0x1a.shiftKey&&(_0x1a.keyCode==73||_0x1a.keyCode==74||_0x1a.keyCode==67))||(_0x1a.ctrlKey&&_0x1a.keyCode==85)){_0x1a.preventDefault();return false;}});
-    
-    const _0x3b4c=document.getElementById('webcam');const _0x2c1d=document.getElementById('canvas');const _0x1c2b=document.getElementById('loading-overlay');const _0x5e4f=document.getElementById('frame-overlay');const _0x4d3e=document.getElementById('frame-source');const _0xloadFrame=document.getElementById('loading-frame-preview');
-    let _0xaa11=null;let _0xbb22="user";let _0xactiveTarget="ZnJhbWUucG5n"; 
+  <script>
+    "use strict";
 
-    function _0xinitCamera() {
-        const _0xunmasked = atob(_0xactiveTarget);
-        
-        // I-load ang image sa background ng loading screen para makita agad ang branding
-        _0xloadFrame.src = _0xunmasked;
-        
-        _0x5e4f.onload = function() { _0x5e4f.style.display = "block"; };
-        _0x5e4f.src = _0xunmasked;
-        _0x4d3e.src = _0xunmasked;
-        _0x7f8g(_0xbb22);
+    /*
+      BUSINESS CUSTOMIZATION:
+      1. Replace frame.png with each business's own transparent PNG.
+      2. Keep the filename exactly "frame.png".
+      3. Optional: change BUSINESS_NAME below.
+      4. Keep frame.png at 1080x1920 (portrait) for best results.
+    */
+    const BUSINESS_NAME = "SOUVENIR CAMERA";
+    const FRAME_URL = "./frame.png";
+
+    const video = document.getElementById("video");
+    const liveFrame = document.getElementById("liveFrame");
+    const captureButton = document.getElementById("captureButton");
+    const switchButton = document.getElementById("switchButton");
+    const cameraStatus = document.getElementById("cameraStatus");
+    const startOverlay = document.getElementById("startOverlay");
+    const startButton = document.getElementById("startButton");
+    const startMessage = document.getElementById("startMessage");
+    const startSpinner = document.getElementById("startSpinner");
+    const photoOverlay = document.getElementById("photoOverlay");
+    const photoPreview = document.getElementById("photoPreview");
+    const saveButton = document.getElementById("saveButton");
+    const retakeButton = document.getElementById("retakeButton");
+    const countdownElement = document.getElementById("countdown");
+    const hint = document.getElementById("hint");
+    const helpOverlay = document.getElementById("helpOverlay");
+    const helpMessage = document.getElementById("helpMessage");
+
+    document.getElementById("businessTitle").textContent = BUSINESS_NAME;
+    let stream = null;
+    let facingMode = "user";
+    let cameraReady = false;
+    let frameReady = false;
+    let captureBusy = false;
+    let currentPhotoBlob = null;
+    let currentPhotoUrl = null;
+    let switching = false;
+
+    function setStatus(message) {
+      cameraStatus.textContent = message;
     }
 
-    _0xinitCamera();
+    function updateControls() {
+      captureButton.disabled = !(cameraReady && frameReady) || captureBusy || switching;
+      switchButton.disabled = !cameraReady || switching;
+    }
 
-    function _0x7f8g(_0x9h8i){
-        if(_0xaa11){_0xaa11.getTracks().forEach(track=>track.stop());}
-        if(_0x9h8i==="user"){_0x3b4c.classList.add('mirror');}else{_0x3b4c.classList.remove('mirror');}
-        navigator.mediaDevices.getUserMedia({video:{facingMode:_0x9h8i,width:{ideal:1920},height:{ideal:1080}},audio:false})
-        .then(stream=>{ 
-            _0xaa11=stream; _0x3b4c.srcObject=stream; 
-            _0x1c2b.style.display = "none"; 
-        })
-        .catch(err=>{ 
-            document.getElementById('loading-text').innerHTML = "<span style='color:#ff4d4d;'>Inyong pinigilan (Blocked) ang camera access. Paki-refresh ang page at piliin ang Allow.</span>";
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+      cameraReady = false;
+      video.srcObject = null;
+      updateControls();
+    }
+
+    function cameraErrorMessage(error) {
+      switch (error && error.name) {
+        case "NotAllowedError":
+        case "PermissionDeniedError":
+          return "Camera permission was denied. Allow camera access in your browser settings, then tap Try Camera Again.";
+        case "NotFoundError":
+        case "DevicesNotFoundError":
+          return "No available camera was found on this device.";
+        case "NotReadableError":
+        case "TrackStartError":
+          return "The camera could not start. Close other apps using the camera and try again.";
+        case "OverconstrainedError":
+        case "ConstraintNotSatisfiedError":
+          return "This camera does not support the requested settings. Try again or switch devices.";
+        case "SecurityError":
+          return "The browser blocked camera access. Open this page through its HTTPS website address.";
+        default:
+          return "The camera could not start. Check camera permissions, close other camera apps, and try again.";
+      }
+    }
+
+    async function startCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        startSpinner.hidden = true;
+        startMessage.textContent = "This browser does not support camera access here. Open the QR link in a current version of Safari on iPhone or Chrome on Android, using HTTPS.";
+        setStatus("Camera unavailable");
+        return false;
+      }
+
+      startButton.disabled = true;
+      startSpinner.hidden = false;
+      startMessage.textContent = "Please allow camera access when your browser asks.";
+      setStatus("Starting camera…");
+      stopCamera();
+
+      try {
+        const constraints = {
+          audio: false,
+          video: {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        };
+        const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+        stream = newStream;
+        video.srcObject = newStream;
+        video.classList.toggle("mirrored", facingMode === "user");
+
+        await new Promise((resolve, reject) => {
+          if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+              video.videoWidth > 0 && video.videoHeight > 0) {
+            resolve();
+            return;
+          }
+          const onReady = () => {
+            cleanup();
+            resolve();
+          };
+          const onError = () => {
+            cleanup();
+            reject(new Error("Video preview could not start."));
+          };
+          const cleanup = () => {
+            video.removeEventListener("loadeddata", onReady);
+            video.removeEventListener("error", onError);
+          };
+          video.addEventListener("loadeddata", onReady, { once: true });
+          video.addEventListener("error", onError, { once: true });
+          video.play().catch(() => {});
         });
+
+        await video.play();
+        cameraReady = video.videoWidth > 0 && video.videoHeight > 0;
+        if (!cameraReady) throw new Error("Camera video is not ready.");
+        setStatus(facingMode === "user" ? "Front camera ready" : "Rear camera ready");
+        startOverlay.hidden = true;
+        updateControls();
+        return true;
+      } catch (error) {
+        console.error("Camera start error:", error);
+        stopCamera();
+        startSpinner.hidden = true;
+        startMessage.textContent = cameraErrorMessage(error);
+        startButton.textContent = "Try Camera Again";
+        startButton.disabled = false;
+        startOverlay.hidden = false;
+        setStatus("Camera needs attention");
+        return false;
+      } finally {
+        startSpinner.hidden = true;
+        if (!cameraReady) startButton.disabled = false;
+      }
     }
 
-    function _0x5b3d() { _0xbb22=(_0xbb22==="user")?"environment":"user"; _0x7f8g(_0xbb22); }
-    
-    async function _0x4a2c(){
-        const _0x11aa=_0x2c1d.getContext('2d');const _0x22bb=1080;const _0x44dd=1920;_0x2c1d.width=_0x22bb;_0x2c1d.height=_0x44dd;const _0x55ee=_0x3b4c.videoWidth;const _0x66ff=_0x3b4c.videoHeight;const _0x77aa=_0x55ee/_0x66ff;const _0x88bb=_0x22bb/_0x44dd;let _0x99cc=0;let _0x12aa=0;let _0x34bb=_0x55ee;let _0x56cc=_0x66ff;if(_0x77aa>_0x88bb){_0x34bb=_0x66ff*_0x88bb;_0x99cc=(_0x55ee-_0x34bb)/2;}else{_0x56cc=_0x55ee/_0x88bb;_0x12aa=(_0x66ff-_0x56cc)/2;}_0x11aa.save();if(_0xbb22==="user"){_0x11aa.translate(_0x2c1d.width,0);_0x11aa.scale(-1,1);}_0x11aa.drawImage(_0x3b4c,_0x99cc,_0x12aa,_0x34bb,_0x56cc,0,0,_0x2c1d.width,_0x2c1d.height);_0x11aa.restore();
-        
-        try { _0x11aa.drawImage(_0x4d3e,0,0,_0x22bb,_0x44dd); } catch(e) {}
-        const _0x78dd=_0x2c1d.toDataURL('image/png');
-        
-        // Diretsong download para sa LAHAT ng devices (Android at iOS)
-        const _0xlink=document.createElement('a');
-        _0xlink.download=`souvenir-${Math.floor(Date.now()/1000)}.png`;
-        _0xlink.href=_0x78dd;
-        _0xlink.click();
+    async function switchCamera() {
+      if (switching || !cameraReady) return;
+      switching = true;
+      updateControls();
+      const oldFacingMode = facingMode;
+      facingMode = facingMode === "user" ? "environment" : "user";
+      setStatus("Switching camera…");
+      const success = await startCamera();
+      if (!success) {
+        // Try to restore the previous camera when the requested facing mode fails.
+        facingMode = oldFacingMode;
+        await startCamera();
+      }
+      switching = false;
+      updateControls();
     }
-</script>
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function runCountdown() {
+      captureBusy = true;
+      updateControls();
+      try {
+        for (const number of ["3", "2", "1"]) {
+          countdownElement.textContent = number;
+          countdownElement.hidden = false;
+          await wait(700);
+          if (!cameraReady || !video.videoWidth) throw new Error("Camera stopped during countdown.");
+        }
+        countdownElement.textContent = "📸";
+        await wait(250);
+      } finally {
+        countdownElement.hidden = true;
+      }
+    }
+
+    function drawCover(ctx, source, sourceWidth, sourceHeight, destWidth, destHeight, mirror) {
+      const sourceRatio = sourceWidth / sourceHeight;
+      const destRatio = destWidth / destHeight;
+      let sx = 0, sy = 0, sw = sourceWidth, sh = sourceHeight;
+      if (sourceRatio > destRatio) {
+        sw = sourceHeight * destRatio;
+        sx = (sourceWidth - sw) / 2;
+      } else {
+        sh = sourceWidth / destRatio;
+        sy = (sourceHeight - sh) / 2;
+      }
+      ctx.save();
+      if (mirror) {
+        ctx.translate(destWidth, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(source, sx, sy, sw, sh, 0, 0, destWidth, destHeight);
+      ctx.restore();
+    }
+
+    async function takePhoto() {
+      if (!(cameraReady && frameReady) || captureBusy || !video.videoWidth || !video.videoHeight) {
+        setStatus("Please wait for the camera and frame");
+        return;
+      }
+      try {
+        await runCountdown();
+        const canvas = document.createElement("canvas");
+        canvas.width = 1080;
+        canvas.height = 1920;
+        const ctx = canvas.getContext("2d", { alpha: false });
+        if (!ctx) throw new Error("Canvas is not supported.");
+        drawCover(ctx, video, video.videoWidth, video.videoHeight, canvas.width, canvas.height, facingMode === "user");
+        ctx.drawImage(liveFrame, 0, 0, canvas.width, canvas.height);
+
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob(result => result ? resolve(result) : reject(new Error("Could not create the photo file.")), "image/png");
+        });
+        if (currentPhotoUrl) URL.revokeObjectURL(currentPhotoUrl);
+        currentPhotoBlob = blob;
+        currentPhotoUrl = URL.createObjectURL(blob);
+        photoPreview.src = currentPhotoUrl;
+        photoOverlay.hidden = false;
+        setStatus("Photo ready to save");
+      } catch (error) {
+        console.error("Photo capture error:", error);
+        helpMessage.textContent = "The photo could not be captured. Make sure the camera is running and try again.";
+        helpOverlay.hidden = false;
+      } finally {
+        captureBusy = false;
+        updateControls();
+      }
+    }
+
+    async function savePhoto() {
+      if (!currentPhotoBlob || !currentPhotoUrl) return;
+      const filename = `souvenir-${Date.now()}.png`;
+
+      // Web Share with a file can offer the native save/share sheet on supported mobile browsers.
+      try {
+        const file = new File([currentPhotoBlob], filename, { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+          await navigator.share({ files: [file], title: "My souvenir photo" });
+          return;
+        }
+      } catch (error) {
+        if (error && error.name === "AbortError") return;
+        console.info("Native file sharing unavailable; trying download fallback.", error);
+      }
+
+      const link = document.createElement("a");
+      link.href = currentPhotoUrl;
+      link.download = filename;
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      document.getElementById("saveHelp").textContent =
+        "If the photo did not save, open the image preview and use your browser's Share, Download, or Save Image option.";
+    }
+
+    async function retakePhoto() {
+      photoOverlay.hidden = true;
+      if (currentPhotoUrl) {
+        URL.revokeObjectURL(currentPhotoUrl);
+        currentPhotoUrl = null;
+      }
+      currentPhotoBlob = null;
+      photoPreview.removeAttribute("src");
+      if (!cameraReady) await startCamera();
+    }
+
+    liveFrame.addEventListener("load", () => {
+      frameReady = liveFrame.naturalWidth > 0 && liveFrame.naturalHeight > 0;
+      if (frameReady) {
+        setStatus(cameraReady ? "Camera ready" : "Frame ready — start camera");
+        hint.textContent = "Position yourself inside the frame";
+      }
+      updateControls();
+    });
+
+    liveFrame.addEventListener("error", () => {
+      frameReady = false;
+      captureButton.disabled = true;
+      setStatus("Branding frame missing");
+      startMessage.textContent = "The branding image frame.png could not be loaded. Upload frame.png beside index.html in your GitHub repository, then reload this page.";
+      startButton.textContent = "Retry";
+      startOverlay.hidden = false;
+      updateControls();
+    });
+
+    startButton.addEventListener("click", startCamera);
+    switchButton.addEventListener("click", switchCamera);
+    captureButton.addEventListener("click", takePhoto);
+    saveButton.addEventListener("click", savePhoto);
+    retakeButton.addEventListener("click", retakePhoto);
+    document.getElementById("helpButton").addEventListener("click", () => { helpOverlay.hidden = false; });
+    document.getElementById("retryButton").addEventListener("click", async () => {
+      helpOverlay.hidden = true;
+      await startCamera();
+    });
+    document.getElementById("closeHelpButton").addEventListener("click", () => { helpOverlay.hidden = true; });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && stream) {
+        // Stop camera when the customer leaves the page; resume explicitly when they return.
+        stopCamera();
+        setStatus("Camera paused");
+        if (!photoOverlay.hidden) return;
+        startMessage.textContent = "The camera was paused when you left this page. Tap below to resume.";
+        startButton.textContent = "Resume Camera";
+        startOverlay.hidden = false;
+      }
+    });
+
+    window.addEventListener("pagehide", stopCamera);
+
+    // Load the overlay before enabling capture. The start overlay remains visible until camera permission is granted.
+    liveFrame.src = FRAME_URL;
+  </script>
 </body>
 </html>
